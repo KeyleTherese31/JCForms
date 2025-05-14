@@ -21,7 +21,7 @@ export default {
     },
     goToJobseeker() {
       // Redirect to external jobseeker site
-      window.location.href = 'https://jobcrest.com/jobseeker-site/';
+      window.location.href = 'http://localhost:8081/';
     },
   },
 }
