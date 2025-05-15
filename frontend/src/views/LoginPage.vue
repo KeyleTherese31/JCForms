@@ -1,6 +1,8 @@
 <template>
   <div class="login-container">
     <div class="card">
+      <button class="back-btn" @click="goBack">← Back</button>
+      <br>
       <img src="@/assets/image.png" alt="JCForms Logo" class="logo mb-3" />
       <h2>Admin Login</h2>
       <form @submit.prevent="handleLogin">
@@ -47,6 +49,9 @@ export default {
         console.error(error);
       }
     },
+    goBack() {
+      this.$router.push('/');
+    },
     goToRegister() {
       this.$router.push('/register');
     },
@@ -77,6 +82,21 @@ export default {
 .logo {
   max-width: 120px;
   border-radius: 8px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #1e88e5;
+  font-size: 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+}
+
+.back-btn:hover {
+  text-decoration: underline;
 }
 
 h2 {
