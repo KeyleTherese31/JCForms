@@ -15,6 +15,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'LoginPage',
   data() {
@@ -24,13 +26,29 @@ export default {
     };
   },
   methods: {
-    handleLogin() {
-      // Replace with your actual login logic
-      console.log('Logging in with:', this.username, this.password);
-      // Example: this.$router.push('/dashboard');
+    async handleLogin() {
+      try {
+        const response = await axios.post('http://localhost:8000/api/admin/login/', {
+          username: this.username,
+          password: this.password,
+        });
+
+        const { access, refresh, username } = response.data;
+
+        // Store tokens
+        localStorage.setItem('access_token', access);
+        localStorage.setItem('refresh_token', refresh);
+        localStorage.setItem('admin_user', username);
+
+        // Redirect to dashboard or home
+        this.$router.push('/dashboard');
+      } catch (error) {
+        alert('Login failed: Invalid credentials or server error.');
+        console.error(error);
+      }
     },
     goToRegister() {
-      this.$router.push('/register'); // Route to registration page
+      this.$router.push('/register');
     },
   },
 };

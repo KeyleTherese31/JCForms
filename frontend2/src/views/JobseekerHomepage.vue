@@ -8,7 +8,7 @@
         <button @click="goToTest">Take Tests</button>
         <button @click="requestRetake">Request Retake Tests</button>
       </div>
-
+      <br>
       <div class="score-section mb-6">
         <h3 class="text-md font-medium mb-2">Your Current Scores</h3>
         <ul class="text-sm text-left">
