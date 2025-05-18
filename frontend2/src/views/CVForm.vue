@@ -54,7 +54,8 @@
             </div>
             <input class="input" v-model="form.pagibig" placeholder="Pag-Ibig (HDMF) No." />
             <input class="input" v-model="form.philhealth" placeholder="Philhealth No." />
-            <input class="input" v-model="form.civil_status" placeholder="Civil Status and No. of Dependents" />
+            <input class="input" v-model="form.civil_status" placeholder="Civil Status" />
+            <input class="input" v-model="form.no_dependents" placeholder="No. of Dependents" />
           </fieldset>
         </div>
 
@@ -177,8 +178,8 @@
 
         <!-- Navigation Buttons -->
         <div class="flex justify-between">
-          <button class="btn-nav" @click="prevSection" :disabled="currentSection === 1">Previous</button>
-          <button class="btn-nav" @click="nextSection" :disabled="currentSection === totalSections">Next</button>
+          <button type="button" class="btn-nav" @click="prevSection" :disabled="currentSection === 1">Previous</button>
+          <button type="button" class="btn-nav" @click="nextSection" :disabled="currentSection === totalSections">Next</button>
           <button class="btn-submit" type="submit" v-if="currentSection === totalSections">Submit</button>
         </div>
       </form>
@@ -187,6 +188,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   data() {
     return {
@@ -211,6 +214,7 @@ export default {
         pagibig: '',
         philhealth: '',
         civil_status: '',
+        no_dependents: '',
         education: {
           college: { course: '', school: '', year: '' },
           vocational: { course: '', school: '', year: '' },
@@ -223,11 +227,17 @@ export default {
           father: { last_name: '', first_name: '', age: '', occupation: '' },
           mother: { last_name: '', first_name: '', age: '', occupation: '' },
           spouse: { last_name: '', first_name: '', age: '', occupation: '' },
-          siblings: [{ last_name: '', first_name: '', age: '', occupation: '' }],
         },
-        employment: [{ employer: '', address: '', position: '', dates: '' }],
-        references: [{ name: '', position: '', contact: '' }],
+        employment: [
+          { employer: '', address: '', position: '', dates: '' },
+          { employer: '', address: '', position: '', dates: '' },
+        ],
+        references: [
+          { name: '', position: '', contact: '' },
+          { name: '', position: '', contact: '' },
+        ],
       },
+      signatureFile: null,
       signatureUrl: '',
     };
   },
@@ -244,20 +254,55 @@ export default {
     handleSignatureUpload(event) {
       const file = event.target.files[0];
       if (file) {
-        this.signatureUrl = URL.createObjectURL(file); // Placeholder
+        this.signatureFile = file;
+        this.signatureUrl = URL.createObjectURL(file);
       }
     },
-    submitForm() {
-      alert('Form submitted!');
-    },
-    goBack() {
-      this.$router.go(-1);
-    },
+    async submitForm() {
+      try {
+        const formData = new FormData();
+
+        // Append all form fields
+        for (const key in this.form) {
+          if (typeof this.form[key] === 'object') {
+            formData.append(key, JSON.stringify(this.form[key]));
+          } else {
+            formData.append(key, this.form[key]);
+          }
+        }
+
+        // Attach the signature file if it exists
+        if (this.signatureFile) {
+          formData.append('signature', this.signatureFile);
+        }
+
+        const response = await axios.post('http://localhost:8000/api/submit-cv/', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data', // Let Axios handle it automatically, this line is optional
+          },
+        });
+
+        if (response.status === 200 || response.status === 201) {
+          alert('CV submitted successfully!');
+          this.$router.push('/js-homepage');
+        } else {
+          alert('Unexpected response. Please try again.');
+        }
+
+      } catch (error) {
+        console.error('Form submission failed:', error);
+        alert('Failed to submit CV. Please try again.');
+      }
+    }
   },
 };
 </script>
 
+
 <style scoped>
+.input {
+  text-transform: uppercase;
+}
 .jobseeker-cv-page {
   display: flex;
   align-items: center;

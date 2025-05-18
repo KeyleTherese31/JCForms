@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import AdminUser
+from .models import AdminUser, JobseekerCV
 
 admin.site.register(AdminUser, UserAdmin)
+admin.site.register(JobseekerCV)

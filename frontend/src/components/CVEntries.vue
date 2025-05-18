@@ -7,9 +7,9 @@
       <p>Browse, preview, download, or evaluate submitted CVs.</p>
 
       <div v-if="cvEntries.length" class="cv-list">
-        <div v-for="entry in cvEntries" :key="entry.id" class="cv-item">
+                <div v-for="entry in cvEntries" :key="entry.id" class="cv-item">
           <div class="cv-info">
-            <strong>{{ entry.name }}</strong>
+            <strong>{{ entry.first_name }} {{ entry.last_name }}</strong>
           </div>
           <div class="cv-actions">
             <button @click="previewCv(entry)">Preview</button>
@@ -27,30 +27,39 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'CvFormEntries',
   data() {
     return {
-      cvEntries: [
-        { id: 1, name: 'Juan Dela Cruz' },
-        { id: 2, name: 'Maria Santos' },
-        { id: 3, name: 'Pedro Reyes' },
-      ],
+      cvEntries: [],
     };
   },
   methods: {
+    async fetchCvEntries() {
+      try {
+        const response = await axios.get('http://localhost:8000/api/submit-cv/');
+        this.cvEntries = response.data;
+      } catch (error) {
+        console.error('Error fetching CV entries:', error);
+      }
+    },
     goBack() {
       this.$router.push('/dashboard');
     },
     previewCv(entry) {
-      alert(`Previewing CV of ${entry.name} (placeholder)`);
+      this.$router.push({ name: 'PreviewCV', params: { id: entry.id } });
     },
     downloadCv(entry) {
-      alert(`Downloading CV of ${entry.name} (placeholder)`);
+      alert(`Download feature not implemented yet for ${entry.first_name} ${entry.last_name}. View data in developer tools.`);
     },
     evaluateCv(entry) {
-      alert(`Evaluating CV of ${entry.name} (placeholder for evaluation form)`);
+      alert(`Evaluating ${entry.first_name} ${entry.last_name}'s CV:\n(Placeholder for evaluation logic)`);
     },
+  },
+  mounted() {
+    this.fetchCvEntries();
   },
 };
 </script>

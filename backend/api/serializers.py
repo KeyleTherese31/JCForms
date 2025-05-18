@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import AdminUser
+from .models import AdminUser, JobseekerCV
+import json
 
 class AdminRegisterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,3 +22,25 @@ class AdminLoginSerializer(serializers.Serializer):
         if user and user.is_active:
             return user
         raise serializers.ValidationError("Invalid credentials")
+
+class JobseekerCVSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobseekerCV
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        for field in ['education', 'scholarships', 'family', 'employment', 'references']:
+            value = data.get(field)
+            if value:
+                try:
+                    data[field] = json.loads(value)
+                except json.JSONDecodeError:
+                    pass
+        return data
+
+    def to_internal_value(self, data):
+        for field in ['education', 'scholarships', 'family', 'employment', 'references']:
+            if field in data and isinstance(data[field], (dict, list)):
+                data[field] = json.dumps(data[field])
+        return super().to_internal_value(data)

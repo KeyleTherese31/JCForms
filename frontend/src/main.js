@@ -13,6 +13,7 @@ import AdminSettings from './components/AdminSettings.vue';
 import TestsLists from './components/TestsLists.vue';
 import JobseekerAnswers from './components/JobseekerAnswers.vue';
 import CVEntries from './components/CVEntries.vue';
+import CVPreview from './components/CVPreview.vue';
 
 const routes = [
   { path: '/', component: WelcomePage },
@@ -22,7 +23,13 @@ const routes = [
   { path: '/answers', component: JobseekerAnswers },
   { path: '/cvforms', component: CVEntries },
   { path: '/settings', component: AdminSettings },
-  { path: '/tests', component: TestsLists }
+  { path: '/tests', component: TestsLists },
+   {
+    path: '/preview-cv/:id',
+    name: 'PreviewCV',
+    component: CVPreview,
+    props: true,
+  },
 ];
 
 const router = createRouter({
