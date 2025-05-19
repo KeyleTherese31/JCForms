@@ -2,6 +2,12 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 class AdminUser(AbstractUser):
+    ROLE_CHOICES = (
+        ('superadmin', 'Superadmin'),
+        ('admin', 'Admin'),
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='admin')
+
     class Meta:
         verbose_name = 'admin user'
         verbose_name_plural = 'admin users'

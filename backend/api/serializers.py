@@ -6,7 +6,7 @@ import json
 class AdminRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdminUser
-        fields = ['username', 'email', 'password']
+        fields = ['username', 'email', 'password', 'role']  # ✅ Include role
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -20,7 +20,7 @@ class AdminLoginSerializer(serializers.Serializer):
     def validate(self, data):
         user = authenticate(username=data['username'], password=data['password'])
         if user and user.is_active:
-            return user
+            return user  # ✅ Will include user.role in view response
         raise serializers.ValidationError("Invalid credentials")
 
 class JobseekerCVSerializer(serializers.ModelSerializer):

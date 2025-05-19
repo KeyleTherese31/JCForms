@@ -8,6 +8,9 @@ from rest_framework.decorators import api_view, permission_classes
 from .models import JobseekerCV
 from .serializers import AdminRegisterSerializer, AdminLoginSerializer, JobseekerCVSerializer
 
+# ✅ Import your AdminUser model
+from .models import AdminUser
+
 
 class AdminRegisterView(APIView):
     permission_classes = [AllowAny]
@@ -28,10 +31,13 @@ class AdminLoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data
             refresh = RefreshToken.for_user(user)
+            
+            # ✅ Add role to response
             return Response({
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
                 'username': user.username,
+                'role': user.role  # ← ADDED
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
