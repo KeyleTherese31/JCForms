@@ -11,6 +11,10 @@ class AdminUser(AbstractUser):
     class Meta:
         verbose_name = 'admin user'
         verbose_name_plural = 'admin users'
+    
+    @property
+    def actual_role(self):
+        return 'superadmin' if self.is_superuser else self.role
 
 class JobseekerCV(models.Model):
     position = models.CharField(max_length=100)

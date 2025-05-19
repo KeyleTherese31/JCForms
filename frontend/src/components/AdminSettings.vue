@@ -43,10 +43,6 @@
           {{ loading ? 'Saving...' : 'Save Profile' }}
         </button>
       </form>
-
-      <button class="submit-btn logout-btn" @click="logout" type="button">
-        Log Out
-      </button>
     </div>
   </div>
 </template>
@@ -122,11 +118,6 @@ export default {
       } finally {
         this.loading = false;
       }
-    },
-    logout() {
-      // TODO: Add your logout logic here
-      alert("Logging out...");
-      this.$router.push("/login");
     },
     goBack() {
       // Using Vue Router to navigate back to dashboard

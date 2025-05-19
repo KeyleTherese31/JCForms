@@ -32,12 +32,14 @@ class AdminLoginView(APIView):
             user = serializer.validated_data
             refresh = RefreshToken.for_user(user)
             
-            # ✅ Add role to response
+            # ✅ Override role if superuser
+            role = 'superadmin' if user.is_superuser else user.role
+
             return Response({
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
                 'username': user.username,
-                'role': user.role  # ← ADDED
+                'role': user.actual_role
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -73,12 +73,29 @@ export default {
     };
   },
   methods: {
-    async loadQuestions() {
-      // Your existing fetch logic here
-    },
     goBack() {
-      // Using Vue Router to navigate back to dashboard
       this.$router.push('/dashboard');
+    },
+    async loadQuestions() {
+      if (!this.selectedCategory) return;
+
+      try {
+        const response = await fetch(`/api/questions/${encodeURIComponent(this.selectedCategory)}/`);
+        const data = await response.json();
+        this.questions = data.map(q => ({
+          id: q.id,
+          questionType: q.question_type,
+          questionFormat: q.question_format,
+          questionText: q.question_text,
+          questionImageUrl: q.question_image_url,
+          choices: q.choices,
+          answerKey: q.answer_key,
+          hasAnswerKey: q.hasAnswerKey,
+        }));
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+        this.questions = [];
+      }
     }
   }
 };

@@ -2,7 +2,7 @@
   <div class="login-container">
     <div class="card">
       <button class="back-btn" @click="goBack">← Back</button>
-      <br>
+      <br />
       <img src="@/assets/image.png" alt="JCForms Logo" class="logo mb-3" />
       <h2>Admin Login</h2>
       <form @submit.prevent="handleLogin">
@@ -35,14 +35,15 @@ export default {
           password: this.password,
         });
 
-        const { access, refresh, username } = response.data;
+        const { access, refresh, username, role } = response.data;
 
-        // Store tokens
+        // Store tokens and role
         localStorage.setItem('access_token', access);
         localStorage.setItem('refresh_token', refresh);
         localStorage.setItem('admin_user', username);
+        localStorage.setItem('admin_role', role); // 👈
 
-        // Redirect to dashboard or home
+        // Redirect to dashboard
         this.$router.push('/dashboard');
       } catch (error) {
         alert('Login failed: Invalid credentials or server error.');
