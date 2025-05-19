@@ -44,3 +44,31 @@ class JobseekerCV(models.Model):
     references = models.TextField(blank=True, null=True)
 
     signature = models.ImageField(upload_to='signatures/', blank=True, null=True)
+
+from django.db import models
+
+class Question(models.Model):
+    TEST_CATEGORIES = [
+        ('Image Pattern Analysis', 'Image Pattern Analysis'),
+        ('Basic Math', 'Basic Math'),
+        ('Problem Analysis and Solving', 'Problem Analysis and Solving'),
+        ('Reading Comprehension', 'Reading Comprehension'),
+        ('Pre Interview Questionnaire', 'Pre Interview Questionnaire'),
+        ('Sentence Completion', 'Sentence Completion'),
+        ('Other', 'Other'),
+    ]
+
+    test_category = models.CharField(max_length=255, choices=TEST_CATEGORIES)
+    question_type = models.CharField(max_length=10, choices=[('text', 'Text'), ('image', 'Image')])
+    question_text = models.TextField(blank=True, null=True)
+    question_image = models.ImageField(upload_to='questions/', blank=True, null=True)
+    question_format = models.CharField(max_length=20)
+    has_answer_key = models.BooleanField(default=False)
+    answer_key = models.TextField(blank=True, null=True)
+    choices = models.JSONField(blank=True, null=True)  # Store choices as JSON
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.question_text or "Image Question"

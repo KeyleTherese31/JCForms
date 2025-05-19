@@ -153,39 +153,39 @@ export default {
       this.resetForm();
     },
     async submitAllQuestions() {
-      const formData = new FormData();
-      this.questions.forEach((q, index) => {
-        formData.append(`questions[${index}][test_category]`, q.testCategory);
-        formData.append(`questions[${index}][question_type]`, q.questionType);
-        formData.append(`questions[${index}][question_format]`, q.questionFormat);
-        formData.append(`questions[${index}][has_answer_key]`, q.hasAnswerKey);
-        formData.append(`questions[${index}][answer_key]`, q.answerKey || '');
-        
+    const formData = new FormData();
+
+    this.questions.forEach((q, index) => {
+        const questionData = {
+        test_category: q.testCategory,
+        question_type: q.questionType,
+        question_format: q.questionFormat,
+        has_answer_key: q.hasAnswerKey,
+        answer_key: q.answerKey || '',
+        choices: q.choices || [],
+        };
+
         if (q.questionType === 'text') {
-          formData.append(`questions[${index}][question_text]`, q.questionText);
+        questionData.question_text = q.questionText;
         } else if (q.questionType === 'image' && q.questionImage) {
-          formData.append(`questions[${index}][question_image]`, q.questionImage);
+        formData.append(`question_image_${index}`, q.questionImage);
+        questionData.question_image = `question_image_${index}`;
         }
 
-        if (
-          q.questionFormat === 'multiple_choice' ||
-          q.questionFormat === 'checkboxes'
-        ) {
-          formData.append(`questions[${index}][choices]`, JSON.stringify(q.choices));
-        }
-      });
+        formData.append('questions', JSON.stringify(questionData));
+    });
 
-      try {
+    try {
         await fetch('http://localhost:8000/api/questions/bulk/', {
-          method: 'POST',
-          body: formData
+        method: 'POST',
+        body: formData,
         });
         alert('All questions submitted successfully!');
         this.questions = [];
-      } catch (error) {
+    } catch (error) {
         console.error('Error submitting questions:', error);
         alert('Failed to submit questions.');
-      }
+    }
     }
   }
 };

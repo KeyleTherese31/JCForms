@@ -5,8 +5,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import api_view, permission_classes
-from .models import JobseekerCV
-from .serializers import AdminRegisterSerializer, AdminLoginSerializer, JobseekerCVSerializer
+from .models import JobseekerCV, Question
+from .serializers import AdminRegisterSerializer, AdminLoginSerializer, JobseekerCVSerializer, QuestionSerializer
 
 # ✅ Import your AdminUser model
 from .models import AdminUser
@@ -91,3 +91,20 @@ def mobile_login(request):
     exists = JobseekerCV.objects.filter(contact_no=mobile).exists()
 
     return Response({'exists': exists}, status=status.HTTP_200_OK)
+
+class BulkQuestionView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        questions_data = request.data.getlist('questions')
+        
+        # Deserialize each question
+        question_instances = []
+        for question_data in questions_data:
+            serializer = QuestionSerializer(data=eval(question_data))
+            if serializer.is_valid():
+                question_instances.append(serializer.save())
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({"message": "Questions submitted successfully"}, status=status.HTTP_201_CREATED)

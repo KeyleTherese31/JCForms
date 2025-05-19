@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import AdminUser, JobseekerCV
+from .models import AdminUser, JobseekerCV, Question
 import json
 
 class AdminRegisterSerializer(serializers.ModelSerializer):
@@ -44,3 +44,8 @@ class JobseekerCVSerializer(serializers.ModelSerializer):
             if field in data and isinstance(data[field], (dict, list)):
                 data[field] = json.dumps(data[field])
         return super().to_internal_value(data)
+
+class QuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = '__all__'
