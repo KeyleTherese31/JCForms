@@ -19,6 +19,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'MobileLogin',
   data() {
@@ -27,14 +29,26 @@ export default {
     };
   },
   methods: {
-    submitMobile() {
+    async submitMobile() {
       if (!this.mobile || !/^09\d{9}$/.test(this.mobile)) {
         alert('Please enter a valid mobile number (e.g. 09171234567).');
         return;
       }
 
-      // Replace this with actual login logic
-      this.$router.push(`/js-homepage?mobile=${this.mobile}`);
+      try {
+        const response = await axios.post('http://localhost:8000/api/jobseeker-login/', {
+          mobile: this.mobile,
+        });
+
+        if (response.data.exists) {
+          this.$router.push(`/js-homepage?mobile=${this.mobile}`);
+        } else {
+          alert('Mobile number not found. Please register as a new jobseeker.');
+        }
+      } catch (error) {
+        console.error(error);
+        alert('An error occurred while checking your mobile number.');
+      }
     },
     goBack() {
       this.$router.push('/');

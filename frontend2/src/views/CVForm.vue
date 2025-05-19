@@ -245,6 +245,9 @@ export default {
     toggleTheme() {
       this.theme = this.theme === 'light' ? 'dark' : 'light';
     },
+    goBack() {
+      this.$router.push('/');
+    },
     nextSection() {
       if (this.currentSection < this.totalSections) this.currentSection++;
     },
