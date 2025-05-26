@@ -17,7 +17,7 @@ import CVPreview from './components/CVPreview.vue';
 
 // Superadmin-only (Create this component!)
 import AdminPanel from './components/AdminPanel.vue';
-import ManageTest from './components/ManageTest.vue';
+import CreateTest from './components/CreateTest.vue';
 
 const routes = [
   { path: '/', component: WelcomePage },
@@ -62,7 +62,7 @@ const routes = [
   },
   {
     path: '/testpanel',
-    component: ManageTest,
+    component: CreateTest,
     meta: { requiresAuth: true, requiresSuperadmin: true }
   }
 ];

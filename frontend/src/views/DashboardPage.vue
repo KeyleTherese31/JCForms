@@ -6,7 +6,7 @@
 
       <div class="button-group">
         <button @click="goTo('tests')">Test & Questions</button>
-        <button v-if="isSuperadmin" @click="goTo('testpanel')">Manage Tests & Questions</button>
+        <button v-if="isSuperadmin" @click="goTo('testpanel')">Create Tests & Questions</button>
         <button @click="goTo('answers')">Jobseeker's Answer Entries</button>
         <button @click="goTo('cvforms')">Jobseeker's CV Form Entries</button>
         <button @click="goTo('settings')">Settings</button>
