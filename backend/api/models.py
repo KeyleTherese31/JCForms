@@ -45,18 +45,23 @@ class JobseekerCV(models.Model):
 
     signature = models.ImageField(upload_to='signatures/', blank=True, null=True)
 
-class Test(models.Model):
-    CATEGORY_CHOICES = [
+class Question(models.Model):
+    TEST_CATEGORIES = [
         ('Image Pattern Analysis', 'Image Pattern Analysis'),
         ('Basic Math', 'Basic Math'),
-        ('Problem Analysis and Solving', 'Problem Analysis and Solving'),
+        ('Problem Analysis', 'Problem Analysis'),
         ('Reading Comprehension', 'Reading Comprehension'),
         ('Pre Interview Questionnaire', 'Pre Interview Questionnaire'),
         ('Sentence Completion', 'Sentence Completion'),
         ('Other', 'Other'),
     ]
 
-    FORMAT_CHOICES = [
+    QUESTION_TYPE = [
+        ('text', 'Text'),
+        ('image', 'Image'),
+    ]
+
+    QUESTION_FORMAT = [
         ('multiple_choice', 'Multiple Choice'),
         ('true_false', 'True / False'),
         ('short_answer', 'Short Answer'),
@@ -64,24 +69,21 @@ class Test(models.Model):
         ('checkboxes', 'Checkboxes'),
     ]
 
-    QUESTION_TYPE_CHOICES = [
-        ('text', 'Text'),
-        ('image', 'Image'),
-    ]
-
-    category = models.CharField(max_length=100, choices=CATEGORY_CHOICES)
-    question_format = models.CharField(max_length=50, choices=FORMAT_CHOICES)
-    question_type = models.CharField(max_length=20, choices=QUESTION_TYPE_CHOICES)
-    question_text = models.TextField(blank=True, null=True)
-    question_image = models.ImageField(upload_to='question_images/', blank=True, null=True)
-
-    has_answer_key = models.BooleanField(default=True)
-    answer_key = models.TextField(blank=True, null=True)
-
-    # Store choices as JSON list (for multiple_choice, checkboxes)
-    choices = models.JSONField(blank=True, null=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
+    test_category = models.CharField(max_length=50, choices=TEST_CATEGORIES)
+    question_type = models.CharField(max_length=10, choices=QUESTION_TYPE)
+    question_text = models.TextField(blank=True)
+    question_image = models.ImageField(upload_to='questions/', blank=True, null=True)
+    question_format = models.CharField(max_length=20, choices=QUESTION_FORMAT)
+    has_answer_key = models.BooleanField(default=False)
+    answer_key = models.CharField(max_length=255, blank=True)
 
     def __str__(self):
-        return f"{self.category} - {self.question_text or 'Image Question'}"
+        return self.question_text or f"Image Question ({self.id})"
+
+class Choice(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
+    text = models.CharField(max_length=255)
+    is_correct = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.text

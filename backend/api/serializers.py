@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import AdminUser, JobseekerCV, Test
+from .models import AdminUser, JobseekerCV, Question, Choice
 import json
 
 class AdminRegisterSerializer(serializers.ModelSerializer):
@@ -45,29 +45,25 @@ class JobseekerCVSerializer(serializers.ModelSerializer):
                 data[field] = json.dumps(data[field])
         return super().to_internal_value(data)
 
-class TestSerializer(serializers.ModelSerializer):
+class ChoiceSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Test
-        fields = '__all__'
+        model = Choice
+        fields = ['text', 'is_correct']
 
-class BulkTestUploadSerializer(serializers.Serializer):
-    questions = serializers.ListField(
-    child=serializers.DictField(), write_only=True
-    )
+class QuestionSerializer(serializers.ModelSerializer):
+    choices = ChoiceSerializer(many=True, required=False)
+
+    class Meta:
+        model = Question
+        fields = [
+            'id', 'test_category', 'question_type', 'question_text',
+            'question_image', 'question_format', 'has_answer_key',
+            'answer_key', 'choices'
+        ]
 
     def create(self, validated_data):
-        created_questions = []
-        for item in validated_data['questions']:
-            # Normalize choices from JSON string if needed
-            if isinstance(item.get('choices'), str):
-                try:
-                    item['choices'] = json.loads(item['choices'])
-                except json.JSONDecodeError:
-                    item['choices'] = []
-
-            # Remove image if it's empty
-            if item.get('question_type') == 'image' and not item.get('question_image'):
-                item.pop('question_image', None)
-
-            created_questions.append(Test.objects.create(**item))
-        return created_questions
+        choices_data = validated_data.pop('choices', [])
+        question = Question.objects.create(**validated_data)
+        for choice in choices_data:
+            Choice.objects.create(question=question, **choice)
+        return question

@@ -107,38 +107,67 @@
 export default {
   data() {
     return {
-      testCategories: [
-        'Image Pattern Analysis',
-        'Basic Math',
-        'Problem Analysis and Solving',
-        'Reading Comprehension',
-        'Pre Interview Questionnaire',
-        'Sentence Completion',
-        'Other'
-      ],
       form: {
         test_category: '',
         question_type: 'text',
         question_text: '',
         question_image: null,
         question_format: 'multiple_choice',
-        has_answer_key: true,
+        has_answer_key: false,
         answer_key: '',
-        choices: []
+        choices: [],
       },
-      questions: []
+      questions: [],
+      testCategories: [
+        'Image Pattern Analysis',
+        'Basic Math',
+        'Problem Analysis',
+        'Reading Comprehension',
+        'Pre Interview Questionnaire',
+        'Sentence Completion',
+        'Other',
+      ],
     };
   },
   methods: {
-    handleImageUpload(event) {
-      const file = event.target.files[0];
-      this.form.question_image = file;
-    },
     addChoice() {
       this.form.choices.push({ text: '', is_correct: false });
     },
     removeChoice(index) {
       this.form.choices.splice(index, 1);
+    },
+    handleImageUpload(event) {
+      const file = event.target.files[0];
+      this.form.question_image = file;
+    },
+    saveCurrentQuestion() {
+      this.questions.push({ ...this.form });
+      this.resetForm();
+    },
+    submitAllQuestions() {
+      const formData = new FormData();
+      this.questions.forEach((q, index) => {
+        for (const key in q) {
+          if (key === 'choices') {
+            formData.append(`questions[${index}][choices]`, JSON.stringify(q.choices));
+          } else {
+            formData.append(`questions[${index}][${key}]`, q[key]);
+          }
+        }
+      });
+
+      fetch('http://localhost:8000/api/questions/bulk-create/', {
+        method: 'POST',
+        body: formData,
+      })
+        .then(() => {
+          alert('Questions submitted successfully!');
+          this.questions = [];
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Submission failed.');
+        });
     },
     resetForm() {
       this.form = {
@@ -147,57 +176,12 @@ export default {
         question_text: '',
         question_image: null,
         question_format: 'multiple_choice',
-        has_answer_key: true,
+        has_answer_key: false,
         answer_key: '',
-        choices: []
+        choices: [],
       };
     },
-    saveCurrentQuestion() {
-      const questionCopy = JSON.parse(JSON.stringify(this.form));
-      questionCopy.question_image = this.form.question_image;
-      this.questions.push(questionCopy);
-      alert('Question saved locally.');
-      this.resetForm();
-    },
-    async submitAllQuestions() {
-      if (!this.questions.length) return alert("No questions to submit.");
-
-      const formData = new FormData();
-
-      this.questions.forEach((q, index) => {
-        formData.append(`questions[${index}][test_category]`, q.test_category);
-        formData.append(`questions[${index}][question_type]`, q.question_type);
-        formData.append(`questions[${index}][question_format]`, q.question_format);
-        formData.append(`questions[${index}][has_answer_key]`, q.has_answer_key);
-        formData.append(`questions[${index}][answer_key]`, q.answer_key || '');
-
-        if (q.question_type === 'text') {
-          formData.append(`questions[${index}][question_text]`, q.question_text);
-        } else if (q.question_type === 'image' && q.question_image) {
-          formData.append(`questions[${index}][question_image]`, q.question_image);
-        }
-
-        if (q.question_format === 'multiple_choice' || q.question_format === 'checkboxes') {
-          formData.append(`questions[${index}][choices]`, JSON.stringify(q.choices));
-        }
-      });
-
-      try {
-        const response = await fetch('http://localhost:8000/api/questions/bulk/', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!response.ok) throw new Error('Submission failed.');
-
-        alert('Questions successfully submitted to the backend!');
-        this.questions = [];
-      } catch (error) {
-        console.error('Error submitting questions:', error);
-        alert('Submission failed. Please try again.');
-      }
-    }
-  }
+  },
 };
 </script>
 

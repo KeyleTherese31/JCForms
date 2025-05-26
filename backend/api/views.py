@@ -5,12 +5,13 @@ from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import api_view, permission_classes
-from .models import JobseekerCV, Test
-from .serializers import AdminRegisterSerializer, AdminLoginSerializer, JobseekerCVSerializer, TestSerializer, BulkTestUploadSerializer
+from .models import JobseekerCV, Question, Choice
+from .serializers import AdminRegisterSerializer, AdminLoginSerializer, JobseekerCVSerializer, QuestionSerializer
+from django.views.decorators.csrf import csrf_exempt
 
 # ✅ Import your AdminUser model
 from .models import AdminUser
-
+import json
 
 class AdminRegisterView(APIView):
     permission_classes = [AllowAny]
@@ -92,44 +93,44 @@ def mobile_login(request):
 
     return Response({'exists': exists}, status=status.HTTP_200_OK)
 
+import json
 
-class BulkTestUploadView(APIView):
-    def post(self, request, *args, **kwargs):
-        serializer = BulkTestUploadSerializer(data={'questions': request.data.getlist('questions')})
-        
-        # For non-File inputs sent as key=value strings
-        if not serializer.is_valid():
-            # Try to build question objects from multi-part data
-            questions = []
-            i = 0
-            while f'questions[{i}][test_category]' in request.data:
-                question = {
-                    'category': request.data.get(f'questions[{i}][test_category]'),
-                    'question_type': request.data.get(f'questions[{i}][question_type]'),
-                    'question_format': request.data.get(f'questions[{i}][question_format]'),
-                    'has_answer_key': request.data.get(f'questions[{i}][has_answer_key]') == 'true',
-                    'answer_key': request.data.get(f'questions[{i}][answer_key]'),
-                    'question_text': request.data.get(f'questions[{i}][question_text]', ''),
-                    'choices': request.data.get(f'questions[{i}][choices]', '[]'),
-                    'question_image': request.FILES.get(f'questions[{i}][question_image]')
-                }
-                questions.append(question)
-                i += 1
-            serializer = BulkTestUploadSerializer(data={'questions': questions})
-            serializer.is_valid(raise_exception=True)
+class BulkQuestionCreateView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
 
-        serializer.save()
-        return Response({"message": "Questions created successfully!"}, status=status.HTTP_201_CREATED)
+    def post(self, request):
+        index = 0
+        saved_count = 0
 
+        while f'questions[{index}][question_text]' in request.POST or f'questions[{index}][question_image]' in request.FILES:
+            question_data = {
+                'test_category': request.POST.get(f'questions[{index}][test_category]'),
+                'question_type': request.POST.get(f'questions[{index}][question_type]'),
+                'question_text': request.POST.get(f'questions[{index}][question_text]', ''),
+                'question_format': request.POST.get(f'questions[{index}][question_format]'),
+                'has_answer_key': request.POST.get(f'questions[{index}][has_answer_key]') == 'true',
+                'answer_key': request.POST.get(f'questions[{index}][answer_key]', ''),
+                'question_image': request.FILES.get(f'questions[{index}][question_image]'),
+            }
 
-class TestListView(APIView):
-    permission_classes = [AllowAny]
+            # Save the question
+            question = Question.objects.create(**question_data)
 
-    def get(self, request):
-        category = request.query_params.get('category')
-        if category:
-            tests = Test.objects.filter(category=category).order_by('id')
-        else:
-            tests = Test.objects.all().order_by('id')
-        serializer = TestSerializer(tests, many=True)
-        return Response(serializer.data)
+            # Save the choices (if any)
+            choices_json = request.POST.get(f'questions[{index}][choices]')
+            if choices_json:
+                try:
+                    choices = json.loads(choices_json)
+                    for choice in choices:
+                        Choice.objects.create(
+                            question=question,
+                            text=choice.get('text', ''),
+                            is_correct=choice.get('is_correct', False)
+                        )
+                except json.JSONDecodeError:
+                    return Response({'error': f'Invalid choices JSON at index {index}'}, status=400)
+
+            saved_count += 1
+            index += 1
+
+        return Response({'message': f'{saved_count} questions saved successfully.'}, status=status.HTTP_201_CREATED)

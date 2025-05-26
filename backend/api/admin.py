@@ -1,16 +1,12 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from .models import AdminUser, JobseekerCV
+from django.apps import apps
+from django.contrib.admin.sites import AlreadyRegistered
 
-class CustomAdminUserAdmin(UserAdmin):
-    model = AdminUser
-    list_display = ('username', 'email', 'role', 'is_staff', 'is_superuser')
-    fieldsets = UserAdmin.fieldsets + (
-        ('Role Information', {'fields': ('role',)}),
-    )
-    add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Role Information', {'fields': ('role',)}),
-    )
+# Get all models in this app
+app_models = apps.get_app_config('api').get_models()
 
-admin.site.register(AdminUser, CustomAdminUserAdmin)
-admin.site.register(JobseekerCV)
+for model in app_models:
+    try:
+        admin.site.register(model)
+    except AlreadyRegistered:
+        pass
