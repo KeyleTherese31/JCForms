@@ -47,16 +47,41 @@ class JobseekerCV(models.Model):
 
 class Test(models.Model):
     CATEGORY_CHOICES = [
-        ('aptitude', 'Aptitude'),
-        ('technical', 'Technical'),
-        ('personality', 'Personality'),
-        # Add more as needed
+        ('Image Pattern Analysis', 'Image Pattern Analysis'),
+        ('Basic Math', 'Basic Math'),
+        ('Problem Analysis and Solving', 'Problem Analysis and Solving'),
+        ('Reading Comprehension', 'Reading Comprehension'),
+        ('Pre Interview Questionnaire', 'Pre Interview Questionnaire'),
+        ('Sentence Completion', 'Sentence Completion'),
+        ('Other', 'Other'),
+    ]
+
+    FORMAT_CHOICES = [
+        ('multiple_choice', 'Multiple Choice'),
+        ('true_false', 'True / False'),
+        ('short_answer', 'Short Answer'),
+        ('long_answer', 'Long Answer'),
+        ('checkboxes', 'Checkboxes'),
+    ]
+
+    QUESTION_TYPE_CHOICES = [
+        ('text', 'Text'),
+        ('image', 'Image'),
     ]
 
     category = models.CharField(max_length=100, choices=CATEGORY_CHOICES)
-    question_text = models.TextField()
-    question_type = models.CharField(max_length=50)  # e.g. 'multipleChoice', 'trueFalse', 'shortAnswer', etc.
-    choices = models.TextField(blank=True, null=True)  # Store choices as JSON string if applicable
+    question_format = models.CharField(max_length=50, choices=FORMAT_CHOICES)
+    question_type = models.CharField(max_length=20, choices=QUESTION_TYPE_CHOICES)
+    question_text = models.TextField(blank=True, null=True)
+    question_image = models.ImageField(upload_to='question_images/', blank=True, null=True)
+
+    has_answer_key = models.BooleanField(default=True)
+    answer_key = models.TextField(blank=True, null=True)
+
+    # Store choices as JSON list (for multiple_choice, checkboxes)
+    choices = models.JSONField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.category} - {self.question_text[:30]}"
+        return f"{self.category} - {self.question_text or 'Image Question'}"

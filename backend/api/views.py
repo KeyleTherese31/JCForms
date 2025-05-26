@@ -6,7 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import api_view, permission_classes
 from .models import JobseekerCV, Test
-from .serializers import AdminRegisterSerializer, AdminLoginSerializer, JobseekerCVSerializer, TestSerializer
+from .serializers import AdminRegisterSerializer, AdminLoginSerializer, JobseekerCVSerializer, TestSerializer, BulkTestUploadSerializer
 
 # ✅ Import your AdminUser model
 from .models import AdminUser
@@ -92,15 +92,34 @@ def mobile_login(request):
 
     return Response({'exists': exists}, status=status.HTTP_200_OK)
 
-class TestCreateView(APIView):
-    permission_classes = [AllowAny]
 
-    def post(self, request):
-        serializer = TestSerializer(data=request.data, many=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'message': 'Tests created successfully'}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class BulkTestUploadView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = BulkTestUploadSerializer(data={'questions': request.data.getlist('questions')})
+        
+        # For non-File inputs sent as key=value strings
+        if not serializer.is_valid():
+            # Try to build question objects from multi-part data
+            questions = []
+            i = 0
+            while f'questions[{i}][test_category]' in request.data:
+                question = {
+                    'category': request.data.get(f'questions[{i}][test_category]'),
+                    'question_type': request.data.get(f'questions[{i}][question_type]'),
+                    'question_format': request.data.get(f'questions[{i}][question_format]'),
+                    'has_answer_key': request.data.get(f'questions[{i}][has_answer_key]') == 'true',
+                    'answer_key': request.data.get(f'questions[{i}][answer_key]'),
+                    'question_text': request.data.get(f'questions[{i}][question_text]', ''),
+                    'choices': request.data.get(f'questions[{i}][choices]', '[]'),
+                    'question_image': request.FILES.get(f'questions[{i}][question_image]')
+                }
+                questions.append(question)
+                i += 1
+            serializer = BulkTestUploadSerializer(data={'questions': questions})
+            serializer.is_valid(raise_exception=True)
+
+        serializer.save()
+        return Response({"message": "Questions created successfully!"}, status=status.HTTP_201_CREATED)
 
 
 class TestListView(APIView):

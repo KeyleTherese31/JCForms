@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import AdminRegisterView, AdminLoginView, JobseekerCVView, JobseekerCVDetailView, mobile_login, TestCreateView, TestListView
+from .views import AdminRegisterView, AdminLoginView, JobseekerCVView, JobseekerCVDetailView, mobile_login, TestCreateView, TestListView, BulkTestUploadView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -11,4 +11,6 @@ urlpatterns = [
     path('jobseeker-login/', mobile_login, name='jobseeker-login'),
     path('create-tests/', TestCreateView.as_view(), name='create-tests'),
     path('tests/', TestListView.as_view(), name='test-list'),
+    path('api/questions/bulk/', BulkTestUploadView.as_view(), name='bulk-test-upload'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+ 

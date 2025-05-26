@@ -50,16 +50,24 @@ class TestSerializer(serializers.ModelSerializer):
         model = Test
         fields = '__all__'
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        if data.get('choices'):
-            try:
-                data['choices'] = json.loads(data['choices'])
-            except json.JSONDecodeError:
-                pass
-        return data
+class BulkTestUploadSerializer(serializers.Serializer):
+    questions = serializers.ListField(
+    child=serializers.DictField(), write_only=True
+    )
 
-    def to_internal_value(self, data):
-        if 'choices' in data and isinstance(data['choices'], (dict, list)):
-            data['choices'] = json.dumps(data['choices'])
-        return super().to_internal_value(data)
+    def create(self, validated_data):
+        created_questions = []
+        for item in validated_data['questions']:
+            # Normalize choices from JSON string if needed
+            if isinstance(item.get('choices'), str):
+                try:
+                    item['choices'] = json.loads(item['choices'])
+                except json.JSONDecodeError:
+                    item['choices'] = []
+
+            # Remove image if it's empty
+            if item.get('question_type') == 'image' and not item.get('question_image'):
+                item.pop('question_image', None)
+
+            created_questions.append(Test.objects.create(**item))
+        return created_questions
