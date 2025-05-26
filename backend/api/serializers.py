@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import AdminUser, JobseekerCV
+from .models import AdminUser, JobseekerCV, Test
 import json
 
 class AdminRegisterSerializer(serializers.ModelSerializer):
@@ -43,4 +43,23 @@ class JobseekerCVSerializer(serializers.ModelSerializer):
         for field in ['education', 'scholarships', 'family', 'employment', 'references']:
             if field in data and isinstance(data[field], (dict, list)):
                 data[field] = json.dumps(data[field])
+        return super().to_internal_value(data)
+
+class TestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Test
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if data.get('choices'):
+            try:
+                data['choices'] = json.loads(data['choices'])
+            except json.JSONDecodeError:
+                pass
+        return data
+
+    def to_internal_value(self, data):
+        if 'choices' in data and isinstance(data['choices'], (dict, list)):
+            data['choices'] = json.dumps(data['choices'])
         return super().to_internal_value(data)

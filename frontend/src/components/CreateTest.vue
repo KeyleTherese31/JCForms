@@ -96,6 +96,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   data() {
     return {
@@ -118,7 +120,7 @@ export default {
         answerKey: '',
         choices: []
       },
-      questions: [] // all saved questions go here
+      questions: []
     };
   },
   methods: {
@@ -146,7 +148,6 @@ export default {
     },
     saveCurrentQuestion() {
       const newForm = { ...this.form };
-      // Clone choices array to avoid reference issues
       newForm.choices = JSON.parse(JSON.stringify(this.form.choices));
       this.questions.push(newForm);
       alert('Question saved locally. You can now add another question.');
@@ -160,7 +161,7 @@ export default {
         formData.append(`questions[${index}][question_format]`, q.questionFormat);
         formData.append(`questions[${index}][has_answer_key]`, q.hasAnswerKey);
         formData.append(`questions[${index}][answer_key]`, q.answerKey || '');
-        
+
         if (q.questionType === 'text') {
           formData.append(`questions[${index}][question_text]`, q.questionText);
         } else if (q.questionType === 'image' && q.questionImage) {
@@ -176,10 +177,7 @@ export default {
       });
 
       try {
-        await fetch('http://localhost:8000/api/questions/bulk/', {
-          method: 'POST',
-          body: formData
-        });
+        await axios.post('http://localhost:8000/api/questions/bulk/', formData);
         alert('All questions submitted successfully!');
         this.questions = [];
       } catch (error) {

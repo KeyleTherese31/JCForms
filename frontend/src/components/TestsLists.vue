@@ -56,6 +56,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   data() {
     return {
@@ -80,9 +82,8 @@ export default {
       if (!this.selectedCategory) return;
 
       try {
-        const response = await fetch(`/api/questions/${encodeURIComponent(this.selectedCategory)}/`);
-        const data = await response.json();
-        this.questions = data.map(q => ({
+        const response = await axios.get(`http://localhost:8000/api/questions/${encodeURIComponent(this.selectedCategory)}/`);
+        this.questions = response.data.map(q => ({
           id: q.id,
           questionType: q.question_type,
           questionFormat: q.question_format,
@@ -90,7 +91,7 @@ export default {
           questionImageUrl: q.question_image_url,
           choices: q.choices,
           answerKey: q.answer_key,
-          hasAnswerKey: q.hasAnswerKey,
+          hasAnswerKey: q.has_answer_key,
         }));
       } catch (error) {
         console.error('Error fetching questions:', error);

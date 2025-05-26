@@ -44,3 +44,19 @@ class JobseekerCV(models.Model):
     references = models.TextField(blank=True, null=True)
 
     signature = models.ImageField(upload_to='signatures/', blank=True, null=True)
+
+class Test(models.Model):
+    CATEGORY_CHOICES = [
+        ('aptitude', 'Aptitude'),
+        ('technical', 'Technical'),
+        ('personality', 'Personality'),
+        # Add more as needed
+    ]
+
+    category = models.CharField(max_length=100, choices=CATEGORY_CHOICES)
+    question_text = models.TextField()
+    question_type = models.CharField(max_length=50)  # e.g. 'multipleChoice', 'trueFalse', 'shortAnswer', etc.
+    choices = models.TextField(blank=True, null=True)  # Store choices as JSON string if applicable
+
+    def __str__(self):
+        return f"{self.category} - {self.question_text[:30]}"
