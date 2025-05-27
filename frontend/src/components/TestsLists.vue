@@ -43,7 +43,7 @@
                     :key="i"
                     class="correct"
                   >
-                    ✔ {{ choice.text || '[No Text]' }}
+                    ✔ {{ choice.text || choice.label || '[No Text]' }}
                   </li>
                 </ul>
                 <p v-else>No correct answer marked in choices.</p>
@@ -55,12 +55,6 @@
               <span v-if="q.answerKey && q.answerKey.trim() !== ''">{{ q.answerKey }}</span>
               <span v-else>No correct answer provided.</span>
             </template>
-          </div>
-
-          <!-- Edit/Delete Buttons for Superadmin -->
-          <div v-if="isSuperadmin" class="question-actions">
-            <button @click="editQuestion(q)" class="edit-btn">✏️ Edit</button>
-            <button @click="deleteQuestion(q.id)" class="delete-btn">🗑 Delete</button>
           </div>
         </div>
       </div>
@@ -88,8 +82,7 @@ export default {
         'Other'
       ],
       selectedCategory: '',
-      questions: [],
-      isSuperadmin: localStorage.getItem('role') === 'superadmin'
+      questions: []
     };
   },
   methods: {
@@ -98,14 +91,18 @@ export default {
     },
     async loadQuestions() {
       if (!this.selectedCategory) return;
-
+ 
       try {
         const encodedCategory = encodeURIComponent(this.selectedCategory);
         const response = await axios.get(`http://localhost:8000/api/questions/${encodedCategory}/`);
         console.log('Raw question data:', response.data);
 
-        this.questions = response.data
-          .map(q => ({
+        this.questions = response.data.map(q => {
+          if (q.choices && q.choices.length > 0) {
+            console.log(`Question ${q.id} - First choice:`, q.choices[0]);
+          }
+
+          return {
             id: q.id,
             questionType: q.question_type,
             questionFormat: q.question_format,
@@ -117,27 +114,11 @@ export default {
               text: c.text || c.label || '',
               isCorrect: c.isCorrect || c.is_correct === true
             }))
-          }))
-          .sort((a, b) => a.id - b.id); // sort by ID
+          };
+        });
       } catch (error) {
         console.error('Error fetching questions:', error);
         this.questions = [];
-      }
-    },
-    editQuestion(question) {
-      this.$router.push({ name: 'EditQuestion', params: { id: question.id } });
-    },
-    async deleteQuestion(questionId) {
-      if (!confirm('Are you sure you want to delete this question?')) return;
-
-      try {
-        await axios.delete(`http://localhost:8000/api/questions/delete/${questionId}/`);
-        this.questions = this.questions
-          .filter(q => q.id !== questionId)
-          .sort((a, b) => a.id - b.id); // re-sort after deletion
-      } catch (err) {
-        console.error('Error deleting question:', err);
-        alert('Failed to delete the question.');
       }
     }
   }
@@ -269,31 +250,6 @@ select:focus {
   color: #2e7d32;
   font-weight: 700;
   border-left: 4px solid #2e7d32;
-}
-
-.question-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.edit-btn,
-.delete-btn {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.edit-btn {
-  background-color: #fff3cd;
-  color: #856404;
-}
-
-.delete-btn {
-  background-color: #f8d7da;
-  color: #721c24;
 }
 
 p {
