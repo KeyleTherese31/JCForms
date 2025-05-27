@@ -32,17 +32,28 @@
             </div>
           </div>
 
-          <div class="answer-key" v-if="q.hasAnswerKey">
+          <div class="answer-key">
             <strong>Answer Key:</strong>
+
             <template v-if="q.questionFormat === 'multiple_choice' || q.questionFormat === 'checkboxes'">
-              <ul>
-                <li v-for="(choice, i) in q.choices" :key="i" :class="{ correct: choice.isCorrect }">
-                  {{ choice.text }}
-                </li>
-              </ul>
+              <template v-if="Array.isArray(q.choices) && q.choices.length">
+                <ul v-if="q.choices.some(c => c.isCorrect)">
+                  <li
+                    v-for="(choice, i) in q.choices.filter(c => c.isCorrect)"
+                    :key="i"
+                    class="correct"
+                  >
+                    ✔ {{ choice.text || choice.label || '[No Text]' }}
+                  </li>
+                </ul>
+                <p v-else>No correct answer marked in choices.</p>
+              </template>
+              <p v-else>No choices found for this question.</p>
             </template>
+
             <template v-else>
-              <span>{{ q.answerKey }}</span>
+              <span v-if="q.answerKey && q.answerKey.trim() !== ''">{{ q.answerKey }}</span>
+              <span v-else>No correct answer provided.</span>
             </template>
           </div>
         </div>
@@ -64,7 +75,7 @@ export default {
       testCategories: [
         'Image Pattern Analysis',
         'Basic Math',
-        'Problem Analysis and Solving',
+        'Problem Analysis',
         'Reading Comprehension',
         'Pre Interview Questionnaire',
         'Sentence Completion',
@@ -80,19 +91,31 @@ export default {
     },
     async loadQuestions() {
       if (!this.selectedCategory) return;
-
+ 
       try {
-        const response = await axios.get(`http://localhost:8000/api/questions/${encodeURIComponent(this.selectedCategory)}/`);
-        this.questions = response.data.map(q => ({
-          id: q.id,
-          questionType: q.question_type,
-          questionFormat: q.question_format,
-          questionText: q.question_text,
-          questionImageUrl: q.question_image_url,
-          choices: q.choices,
-          answerKey: q.answer_key,
-          hasAnswerKey: q.has_answer_key,
-        }));
+        const encodedCategory = encodeURIComponent(this.selectedCategory);
+        const response = await axios.get(`http://localhost:8000/api/questions/${encodedCategory}/`);
+        console.log('Raw question data:', response.data);
+
+        this.questions = response.data.map(q => {
+  if (q.choices && q.choices.length > 0) {
+    console.log(`Question ${q.id} - First choice:`, q.choices[0]);
+  }
+
+  return {
+    id: q.id,
+    questionType: q.question_type,
+    questionFormat: q.question_format,
+    questionText: q.question_text,
+    questionImageUrl: q.question_image_url,
+    answerKey: q.answer_key,
+    hasAnswerKey: q.has_answer_key,
+    choices: (q.choices || []).map(c => ({
+      text: c.text || c.label || '',
+      isCorrect: c.isCorrect || c.is_correct === true
+    }))
+  };
+});
       } catch (error) {
         console.error('Error fetching questions:', error);
         this.questions = [];
@@ -199,7 +222,7 @@ select:focus {
 .question-image {
   max-width: 100%;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .answer-key {
@@ -226,6 +249,7 @@ select:focus {
   background: #c8e6c9;
   color: #2e7d32;
   font-weight: 700;
+  border-left: 4px solid #2e7d32;
 }
 
 p {

@@ -134,3 +134,9 @@ class BulkQuestionCreateView(APIView):
             index += 1
 
         return Response({'message': f'{saved_count} questions saved successfully.'}, status=status.HTTP_201_CREATED)
+
+@api_view(['GET'])
+def questions_by_category(request, category):
+    questions = Question.objects.filter(test_category=category)
+    serializer = QuestionSerializer(questions, many=True)
+    return Response(serializer.data)
