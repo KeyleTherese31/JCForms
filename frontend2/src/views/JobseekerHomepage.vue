@@ -8,12 +8,13 @@
         <button @click="goToTest">Take Tests</button>
         <button @click="requestRetake">Request Retake Tests</button>
       </div>
+
       <br>
       <div class="score-section mb-6">
         <h3 class="text-md font-medium mb-2">Your Current Scores</h3>
         <ul class="text-sm text-left">
           <li v-for="(item, index) in filteredScores" :key="index">
-            {{ item.category }}: {{ item.score }}%
+            {{ item.category }}: {{ item.display }}
           </li>
           <li v-if="filteredScores.length === 0">No available scores yet.</li>
         </ul>
@@ -30,20 +31,23 @@ export default {
     return {
       applicantName: 'Juan Dela Cruz',
       scores: {
-        Math: 85,
-        Logic: 90,
-        Reading: null,
-        Personality: null,
-        English: 78,
-      },
+        'Image Pattern Analysis': { score: 5, total: 10 },
+        'Basic Math': { score: 7, total: 10 },
+        'Problem Analysis': { score: 8, total: 10 },
+        'Reading Comprehension': { score: 6, total: 10 },
+        'Pre Interview Questionnaire': { score: 9, total: 10 },
+      }
     };
   },
   computed: {
     filteredScores() {
       return Object.entries(this.scores)
-        .filter(([, score]) => score !== null)
-        .map(([category, score]) => ({ category, score }));
-    },
+        .filter(([, value]) => value && value.score != null && value.total != null)
+        .map(([category, value]) => ({
+          category,
+          display: `${value.score}/${value.total}`
+        }));
+    }
   },
   methods: {
     goToTest() {
@@ -54,8 +58,8 @@ export default {
     },
     logout() {
       this.$router.push('/mobile-login');
-    },
-  },
+    }
+  }
 };
 </script>
 
