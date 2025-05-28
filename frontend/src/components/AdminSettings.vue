@@ -1,7 +1,7 @@
 <template>
   <div class="form-container">
     <div class="card">
-    <button class="back-btn" @click="goBack">← Back to Dashboard</button>
+      <button class="back-btn" @click="goBack">← Back to Dashboard</button>
 
       <h2>Settings</h2>
 
@@ -28,15 +28,7 @@
 
         <div class="form-group">
           <label for="email">Email:</label>
-          <input id="email" v-model="profile.email" type="email" />
-        </div>
-
-        <div class="form-group">
-          <label for="profileImage">Profile Image:</label>
-          <input id="profileImage" type="file" accept="image/*" @change="onImageChange" />
-          <div v-if="imagePreview" class="image-preview">
-            <img :src="imagePreview" alt="Profile Preview" />
-          </div>
+          <input id="email" v-model="profile.email" type="email" required />
         </div>
 
         <button class="submit-btn" type="submit" :disabled="loading">
@@ -48,6 +40,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: "AdminSettings",
   data() {
@@ -56,74 +50,70 @@ export default {
         username: "",
         password: "",
         fullname: "",
-        email: "",
-        imageFile: null,
+        email: ""
       },
-      imagePreview: null,
-      loading: false,
+      loading: false
     };
   },
   created() {
     this.loadProfile();
   },
   methods: {
-    loadProfile() {
-      // Replace this with your actual logic/API call
-      const currentUser = {
-        username: "adminUser",
-        fullname: "Admin Name",
-        email: "admin@example.com",
-        imageUrl: null,
-      };
-      this.profile.username = currentUser.username;
-      this.profile.fullname = currentUser.fullname;
-      this.profile.email = currentUser.email;
-      this.imagePreview = currentUser.imageUrl || null;
-    },
-    onImageChange(event) {
-      const file = event.target.files[0];
-      if (file && file.type.startsWith("image/")) {
-        this.profile.imageFile = file;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.imagePreview = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      } else {
-        this.profile.imageFile = null;
-        this.imagePreview = null;
+    async loadProfile() {
+      try {
+        const token = localStorage.getItem('access_token');
+
+        const response = await axios.get('http://localhost:8000/api/admin/profile/', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const data = response.data;
+        this.profile.username = data.username;
+        this.profile.fullname = data.fullname;
+        this.profile.email = data.email;
+      } catch (error) {
+        console.error("Failed to load profile:", error);
+        alert("Error loading profile.");
       }
     },
+
     async updateProfile() {
       this.loading = true;
-
-      const formData = new FormData();
-      formData.append("username", this.profile.username);
-      if (this.profile.password) {
-        formData.append("password", this.profile.password);
-      }
-      formData.append("fullname", this.profile.fullname);
-      formData.append("email", this.profile.email);
-      if (this.profile.imageFile) {
-        formData.append("profileImage", this.profile.imageFile);
-      }
-
       try {
-        // TODO: Call your API here to update the profile
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const token = localStorage.getItem('access_token');
+
+        const updatePayload = {
+          username: this.profile.username,
+          fullname: this.profile.fullname,
+          email: this.profile.email
+        };
+
+        if (this.profile.password.trim()) {
+          updatePayload.password = this.profile.password;
+        }
+
+        await axios.put('http://localhost:8000/api/admin/update/', updatePayload, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
         alert("Profile updated successfully!");
         this.profile.password = "";
       } catch (error) {
-        alert("Failed to update profile.");
+        console.error("Profile update failed:", error);
+        alert("Failed to update profile. Please check your input or try again later.");
       } finally {
         this.loading = false;
       }
     },
+
     goBack() {
-      // Using Vue Router to navigate back to dashboard
       this.$router.push('/dashboard');
-    },
-  },
+    }
+  }
 };
 </script>
 
@@ -148,7 +138,23 @@ export default {
   text-align: left;
 }
 
-.card h2 {
+.back-btn {
+  background: none;
+  border: none;
+  color: #3949ab;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  padding: 0;
+  transition: color 0.3s ease;
+}
+
+.back-btn:hover {
+  color: #1e40af;
+}
+
+h2 {
   margin-bottom: 20px;
   color: #333;
   font-weight: 600;
@@ -166,26 +172,9 @@ export default {
   color: #333;
 }
 
-.back-btn {
-  background: none;
-  border: none;
-  color: #3949ab;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  margin-bottom: 20px;
-  padding: 0;
-  transition: color 0.3s ease;
-}
-
-.back-btn:hover {
-  color: #1e40af;
-}
-
 input[type="text"],
 input[type="password"],
-input[type="email"],
-input[type="file"] {
+input[type="email"] {
   width: 100%;
   padding: 10px 12px;
   border-radius: 8px;
@@ -199,21 +188,6 @@ input[type="password"]:focus,
 input[type="email"]:focus {
   outline: none;
   border-color: #3949ab;
-}
-
-.image-preview {
-  margin-top: 10px;
-  max-width: 120px;
-  max-height: 120px;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 3px 8px rgba(57, 73, 171, 0.3);
-}
-
-.image-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .submit-btn {
@@ -237,14 +211,5 @@ input[type="email"]:focus {
 .submit-btn:disabled {
   background-color: #7e87bf;
   cursor: not-allowed;
-}
-
-.logout-btn {
-  background-color: #e53935;
-  margin-top: 15px;
-}
-
-.logout-btn:hover {
-  background-color: #b71c1c;
 }
 </style>
