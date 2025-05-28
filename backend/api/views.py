@@ -8,6 +8,8 @@ from rest_framework.decorators import api_view, permission_classes
 from .models import JobseekerCV, Question, Choice
 from .serializers import AdminRegisterSerializer, AdminLoginSerializer, JobseekerCVSerializer, QuestionSerializer
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.generics import RetrieveUpdateDestroyAPIView
+
 
 # ✅ Import your AdminUser model
 from .models import AdminUser
@@ -140,3 +142,37 @@ def questions_by_category(request, category):
     questions = Question.objects.filter(test_category=category)
     serializer = QuestionSerializer(questions, many=True)
     return Response(serializer.data)
+
+class QuestionDetailView(APIView):
+
+    def get_object(self, pk):
+        try:
+            return Question.objects.get(pk=pk)
+        except Question.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        question = self.get_object(pk)
+        if question is None:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = QuestionSerializer(question)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        question = self.get_object(pk)
+        if question is None:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = QuestionSerializer(question, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        try:
+            question = Question.objects.get(pk=pk)
+        except Question.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        question.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
