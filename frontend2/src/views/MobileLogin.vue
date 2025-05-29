@@ -28,7 +28,7 @@ export default {
       mobile: '',
     };
   },
-  methods: {
+ methods: {
     async submitMobile() {
       if (!this.mobile || !/^09\d{9}$/.test(this.mobile)) {
         alert('Please enter a valid mobile number (e.g. 09171234567).');
@@ -41,7 +41,12 @@ export default {
         });
 
         if (response.data.exists) {
-          this.$router.push(`/js-homepage?mobile=${this.mobile}`);
+          // Store ID and name in localStorage
+          localStorage.setItem('jobseeker_id', response.data.id);
+          localStorage.setItem('jobseeker_name', response.data.full_name);
+
+          // Redirect to homepage
+          this.$router.push('/js-homepage');
         } else {
           alert('Mobile number not found. Please register as a new jobseeker.');
         }

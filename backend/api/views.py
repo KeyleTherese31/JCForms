@@ -83,17 +83,27 @@ class JobseekerCVDetailView(APIView):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def mobile_login(request):
-    """
-    Checks if the submitted mobile number exists in the contact_no field of JobseekerCV.
-    """
     mobile = request.data.get('mobile')
     
     if not mobile:
         return Response({'error': 'Mobile number is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-    exists = JobseekerCV.objects.filter(contact_no=mobile).exists()
+    try:
+        jobseeker = JobseekerCV.objects.get(contact_no=mobile)
+        full_name = f"{jobseeker.first_name} {jobseeker.middle_name} {jobseeker.last_name}".strip()
+        # Remove extra spaces if middle_name is empty:
+        full_name = ' '.join(full_name.split())
 
-    return Response({'exists': exists}, status=status.HTTP_200_OK)
+        return Response({
+            'exists': True,
+            'id': jobseeker.id,
+            'full_name': full_name,
+        }, status=status.HTTP_200_OK)
+    except JobseekerCV.DoesNotExist:
+        return Response({'exists': False}, status=status.HTTP_200_OK)
+    except Exception as e:
+        print("ERROR in mobile_login:", e)
+        return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 import json
 

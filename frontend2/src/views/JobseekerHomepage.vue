@@ -1,7 +1,9 @@
 <template>
   <div class="homepage">
     <div class="card">
-      <h2 class="text-xl font-semibold mb-4">Hello, {{ applicantName }} 👋</h2>
+      <h2 class="text-xl font-semibold mb-4" style="text-transform: uppercase !important;">
+        Hello, {{ applicantName }} 👋
+      </h2>
       <p class="mb-6 text-sm text-gray-600">Please pick an option below to get started:</p>
 
       <div class="button-group mb-6">
@@ -29,7 +31,7 @@
 export default {
   data() {
     return {
-      applicantName: 'Juan Dela Cruz',
+      applicantName: 'Jobseeker', // Default fallback
       scores: {
         'Image Pattern Analysis': { score: 5, total: 10 },
         'Basic Math': { score: 7, total: 10 },
@@ -39,10 +41,16 @@ export default {
       }
     };
   },
+  mounted() {
+    const savedName = localStorage.getItem('jobseeker_name');
+    if (savedName) {
+      this.applicantName = savedName;
+    }
+  },
   computed: {
     filteredScores() {
       return Object.entries(this.scores)
-        .filter(([, value]) => value && value.score != null && value.total != null)
+        .filter(([, value]) => value?.score != null && value?.total != null)
         .map(([category, value]) => ({
           category,
           display: `${value.score}/${value.total}`
@@ -57,11 +65,13 @@ export default {
       this.$router.push('/retake-request');
     },
     logout() {
+      localStorage.removeItem('jobseeker_name'); // Optional: clear name on logout
       this.$router.push('/mobile-login');
     }
   }
 };
 </script>
+
 
 <style scoped>
 .homepage {
