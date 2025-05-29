@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import AdminUser, JobseekerCV, Question, Choice
+from .models import AdminUser, JobseekerCV, Question, Choice, TestSubmission
 import json
 
 class AdminRegisterSerializer(serializers.ModelSerializer):
@@ -67,3 +67,9 @@ class QuestionSerializer(serializers.ModelSerializer):
         for choice in choices_data:
             Choice.objects.create(question=question, **choice)
         return question
+    
+class TestSubmissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TestSubmission
+        fields = ['id', 'jobseeker', 'question', 'submitted_answer', 'submitted_at']
+        read_only_fields = ['submitted_at']

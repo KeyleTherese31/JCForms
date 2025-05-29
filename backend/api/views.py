@@ -1,11 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework import status, generics
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import api_view, permission_classes
-from .models import JobseekerCV, Question, Choice
+from .models import JobseekerCV, Question, Choice, TestSubmission
 from .serializers import AdminRegisterSerializer, AdminLoginSerializer, JobseekerCVSerializer, QuestionSerializer
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
@@ -186,3 +186,50 @@ class QuestionDetailView(APIView):
         
         question.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class SubmitTestView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        print("Received POST data:", request.data)  # DEBUG
+        data = request.data
+        jobseeker_id = data.get('jobseeker_id')
+        answers = data.get('answers', [])
+
+        if not jobseeker_id or not answers:
+            print("Missing jobseeker_id or answers")
+            return Response({"error": "jobseeker_id and answers are required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            jobseeker = JobseekerCV.objects.get(id=jobseeker_id)
+        except JobseekerCV.DoesNotExist:
+            print(f"Jobseeker {jobseeker_id} not found")
+            return Response({"error": "Jobseeker not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        created_submissions = []
+
+        for ans in answers:
+            question_id = ans.get('question_id')
+            submitted_answer = ans.get('answer')
+
+            if not question_id or submitted_answer is None:
+                print(f"Skipping invalid answer: {ans}")
+                continue  # skip invalid
+            
+            try:
+                question = Question.objects.get(id=question_id)
+            except Question.DoesNotExist:
+                print(f"Question {question_id} not found, skipping")
+                continue  # skip invalid
+
+            submission, created = TestSubmission.objects.update_or_create(
+                jobseeker=jobseeker,
+                question=question,
+                defaults={'submitted_answer': submitted_answer}
+            )
+            print(f"Submission saved: {submission.id}")
+            created_submissions.append(submission.id)
+
+        return Response({"message": "Submissions saved", "submission_ids": created_submissions}, status=status.HTTP_201_CREATED)
+
+    

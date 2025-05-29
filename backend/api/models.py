@@ -87,3 +87,12 @@ class Choice(models.Model):
 
     def __str__(self):
         return self.text
+    
+class TestSubmission(models.Model):
+    jobseeker = models.ForeignKey(JobseekerCV, on_delete=models.CASCADE, related_name='test_submissions')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    submitted_answer = models.TextField()  # Could be text, or JSON for multiple answers
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Submission by {self.jobseeker.first_name} for Q{self.question.id}'

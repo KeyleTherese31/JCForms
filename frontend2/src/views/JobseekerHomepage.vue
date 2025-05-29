@@ -59,19 +59,24 @@ export default {
   },
   methods: {
     goToTest() {
-      this.$router.push('/take-test');
+      const jobseekerId = localStorage.getItem('jobseeker_id');
+      if (!jobseekerId) {
+        alert('Jobseeker ID is missing');
+        return;
+      }
+      this.$router.push(`/take-tests/${jobseekerId}`);
     },
     requestRetake() {
       this.$router.push('/retake-request');
     },
     logout() {
-      localStorage.removeItem('jobseeker_name'); // Optional: clear name on logout
+      localStorage.removeItem('jobseeker_name'); 
+      localStorage.removeItem('jobseeker_id'); // also remove ID on logout
       this.$router.push('/mobile-login');
     }
   }
 };
 </script>
-
 
 <style scoped>
 .homepage {
