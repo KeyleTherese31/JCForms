@@ -91,8 +91,10 @@ class Choice(models.Model):
 class TestSubmission(models.Model):
     jobseeker = models.ForeignKey(JobseekerCV, on_delete=models.CASCADE, related_name='test_submissions')
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    submitted_answer = models.TextField()  # Could be text, or JSON for multiple answers
+    test_category = models.CharField(max_length=50, choices=Question.TEST_CATEGORIES)  # Explicitly saved
+    submitted_answer = models.TextField()
+    score = models.FloatField(null=True, blank=True)  # Optional per-question score
     submitted_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'Submission by {self.jobseeker.first_name} for Q{self.question.id}'
+        return f'{self.jobseeker.first_name} - {self.test_category} - Q{self.question.id}'

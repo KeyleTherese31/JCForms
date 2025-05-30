@@ -9,6 +9,7 @@ from .models import JobseekerCV, Question, Choice, TestSubmission
 from .serializers import AdminRegisterSerializer, AdminLoginSerializer, JobseekerCVSerializer, QuestionSerializer
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
+from collections import defaultdict
 
 
 # ✅ Import your AdminUser model
@@ -191,45 +192,101 @@ class SubmitTestView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        print("Received POST data:", request.data)  # DEBUG
         data = request.data
         jobseeker_id = data.get('jobseeker_id')
         answers = data.get('answers', [])
 
         if not jobseeker_id or not answers:
-            print("Missing jobseeker_id or answers")
             return Response({"error": "jobseeker_id and answers are required"}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
             jobseeker = JobseekerCV.objects.get(id=jobseeker_id)
         except JobseekerCV.DoesNotExist:
-            print(f"Jobseeker {jobseeker_id} not found")
             return Response({"error": "Jobseeker not found"}, status=status.HTTP_404_NOT_FOUND)
 
         created_submissions = []
+        category_scores = defaultdict(lambda: {"score": 0.0, "max": 0.0})
+        total_score = 0.0
+        max_score = 0.0
 
         for ans in answers:
             question_id = ans.get('question_id')
             submitted_answer = ans.get('answer')
 
             if not question_id or submitted_answer is None:
-                print(f"Skipping invalid answer: {ans}")
-                continue  # skip invalid
-            
+                continue
+
             try:
                 question = Question.objects.get(id=question_id)
             except Question.DoesNotExist:
-                print(f"Question {question_id} not found, skipping")
-                continue  # skip invalid
+                continue
 
+            score = None
+            if question.has_answer_key:
+                correct_answer = question.answer_key.strip()
+                category = question.test_category
+
+                if question.question_format == 'checkboxes':
+                    if isinstance(submitted_answer, list):
+                        submitted_set = set(map(str.strip, submitted_answer))
+                    else:
+                        submitted_set = set(map(str.strip, submitted_answer.split(',')))
+
+                    correct_set = set(map(str.strip, correct_answer.split(',')))
+                    score = 1.0 if submitted_set == correct_set else 0.0
+                else:
+                    score = 1.0 if str(submitted_answer).strip().lower() == correct_answer.lower() else 0.0
+
+                # Accumulate per category and total
+                category_scores[category]["score"] += score
+                category_scores[category]["max"] += 1.0
+                total_score += score
+                max_score += 1.0
+
+            # Save or update the submission
             submission, created = TestSubmission.objects.update_or_create(
                 jobseeker=jobseeker,
                 question=question,
-                defaults={'submitted_answer': submitted_answer}
+                defaults={
+                    'submitted_answer': submitted_answer,
+                    'test_category': question.test_category,
+                    'score': score,
+                }
             )
-            print(f"Submission saved: {submission.id}")
             created_submissions.append(submission.id)
 
-        return Response({"message": "Submissions saved", "submission_ids": created_submissions}, status=status.HTTP_201_CREATED)
+        # Convert defaultdict to regular dict for JSON response
+        return Response({
+            "message": "Submissions saved",
+            "submission_ids": created_submissions,
+            "total_score": total_score,
+            "max_score": max_score,
+            "category_scores": dict(category_scores),
+        }, status=status.HTTP_201_CREATED)
+       
+class JobseekerScoresView(APIView):
+    permission_classes = [AllowAny]
 
+    def get(self, request, jobseeker_id):
+        submissions = TestSubmission.objects.filter(jobseeker_id=jobseeker_id)
+
+        category_scores = {}
+        total_score = 0
+        max_score = 0
+
+        for sub in submissions:
+            if sub.score is not None:
+                cat = sub.test_category or "Uncategorized"
+                if cat not in category_scores:
+                    category_scores[cat] = {"score": 0.0, "max": 0.0}
+                category_scores[cat]["score"] += sub.score
+                category_scores[cat]["max"] += 1.0
+                total_score += sub.score
+                max_score += 1.0
+
+        return Response({
+            "total_score": total_score,
+            "max_score": max_score,
+            "category_scores": category_scores
+        })
     

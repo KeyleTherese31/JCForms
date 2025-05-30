@@ -31,33 +31,44 @@
 export default {
   data() {
     return {
-      applicantName: 'Jobseeker', // Default fallback
-      scores: {
-        'Image Pattern Analysis': { score: 5, total: 10 },
-        'Basic Math': { score: 7, total: 10 },
-        'Problem Analysis': { score: 8, total: 10 },
-        'Reading Comprehension': { score: 6, total: 10 },
-        'Pre Interview Questionnaire': { score: 9, total: 10 },
-      }
+      applicantName: 'Jobseeker',
+      scores: {} // will be filled from backend
     };
   },
   mounted() {
     const savedName = localStorage.getItem('jobseeker_name');
+    const jobseekerId = localStorage.getItem('jobseeker_id');
+
     if (savedName) {
       this.applicantName = savedName;
+    }
+
+    if (jobseekerId) {
+      this.fetchScores(jobseekerId);
     }
   },
   computed: {
     filteredScores() {
       return Object.entries(this.scores)
-        .filter(([, value]) => value?.score != null && value?.total != null)
+        .filter(([, value]) => value?.score != null && value?.max != null)
         .map(([category, value]) => ({
           category,
-          display: `${value.score}/${value.total}`
+          display: `${value.score}/${value.max}`
         }));
     }
   },
   methods: {
+    async fetchScores(jobseekerId) {
+      try {
+        const response = await fetch(`http://localhost:8000/api/jobseeker-scores/${jobseekerId}/`);
+        const result = await response.json();
+        if (result.category_scores) {
+          this.scores = result.category_scores;
+        }
+      } catch (err) {
+        console.error("Failed to fetch scores:", err);
+      }
+    },
     goToTest() {
       const jobseekerId = localStorage.getItem('jobseeker_id');
       if (!jobseekerId) {
@@ -70,8 +81,8 @@ export default {
       this.$router.push('/retake-request');
     },
     logout() {
-      localStorage.removeItem('jobseeker_name'); 
-      localStorage.removeItem('jobseeker_id'); // also remove ID on logout
+      localStorage.removeItem('jobseeker_name');
+      localStorage.removeItem('jobseeker_id');
       this.$router.push('/mobile-login');
     }
   }

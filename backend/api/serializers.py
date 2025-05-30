@@ -71,5 +71,5 @@ class QuestionSerializer(serializers.ModelSerializer):
 class TestSubmissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = TestSubmission
-        fields = ['id', 'jobseeker', 'question', 'submitted_answer', 'submitted_at']
+        fields = ['id', 'jobseeker', 'question', 'test_category', 'submitted_answer', 'submitted_at']
         read_only_fields = ['submitted_at']

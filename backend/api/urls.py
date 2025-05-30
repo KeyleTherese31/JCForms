@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import AdminRegisterView, AdminLoginView, JobseekerCVView, JobseekerCVDetailView, mobile_login,BulkQuestionCreateView, SubmitTestView
+from .views import AdminRegisterView, AdminLoginView, JobseekerCVView, JobseekerCVDetailView, mobile_login,BulkQuestionCreateView, SubmitTestView, JobseekerScoresView
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views
@@ -13,5 +13,6 @@ urlpatterns = [
     path('questions/bulk-create/', BulkQuestionCreateView.as_view(), name='bulk-question-create'),
     path('questions/<str:category>/', views.questions_by_category),
     path('submit-test/', SubmitTestView.as_view(), name='submit-test'),
+    path('api/jobseeker-scores/<int:jobseeker_id>/', JobseekerScoresView.as_view(), name='jobseeker-scores'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
  
