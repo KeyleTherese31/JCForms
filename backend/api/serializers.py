@@ -23,6 +23,14 @@ class AdminLoginSerializer(serializers.Serializer):
             return user  # ✅ Will include user.role in view response
         raise serializers.ValidationError("Invalid credentials")
 
+class AdminUserSerializer(serializers.ModelSerializer):
+    actual_role = serializers.ReadOnlyField()
+
+    class Meta:
+        model = AdminUser
+        fields = ['id', 'username', 'email', 'role', 'is_active', 'actual_role']
+
+
 class JobseekerCVSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobseekerCV

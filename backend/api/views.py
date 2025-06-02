@@ -1,12 +1,12 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import api_view, permission_classes
 from .models import JobseekerCV, Question, Choice, TestSubmission
-from .serializers import AdminRegisterSerializer, AdminLoginSerializer, JobseekerCVSerializer, QuestionSerializer
+from .serializers import AdminRegisterSerializer, AdminLoginSerializer, AdminUserSerializer, JobseekerCVSerializer, QuestionSerializer
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from collections import defaultdict
@@ -47,6 +47,27 @@ class AdminLoginView(APIView):
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class AdminListView(APIView):
+    permission_classes = [IsAuthenticated]  # was IsAdminUser
+
+    def get(self, request):
+        admins = AdminUser.objects.filter(is_superuser=False, is_active=True)
+        serializer = AdminUserSerializer(admins, many=True)
+        return Response(serializer.data)
+
+class AdminDeactivateView(APIView):
+    permission_classes = [IsAuthenticated]  # was IsAdminUser
+
+    def post(self, request, pk):
+        try:
+            admin = AdminUser.objects.get(pk=pk)
+            if admin.is_superuser:
+                return Response({"error": "Cannot deactivate superadmin"}, status=403)
+            admin.is_active = False
+            admin.save()
+            return Response({"message": "Admin deactivated"})
+        except AdminUser.DoesNotExist:
+            return Response({"error": "Admin not found"}, status=404)
 
 class JobseekerCVView(APIView):
     permission_classes = [AllowAny]

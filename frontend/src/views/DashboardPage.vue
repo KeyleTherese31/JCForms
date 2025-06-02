@@ -38,6 +38,13 @@ export default {
       return this.isSuperadmin ? 'Superadmin Dashboard' : 'Admin Dashboard';
     },
   },
+  created() {
+    // Redirect to login if no token
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      this.$router.push('/login');
+    }
+  },
   methods: {
     goTo(section) {
       const routes = {
@@ -46,7 +53,7 @@ export default {
         answers: '/answers',
         cvforms: '/cvforms',
         settings: '/settings',
-        adminpanel: '/adminpanel', // new route for superadmin
+        adminpanel: '/adminpanel',
       };
       this.$router.push(routes[section]);
     },
