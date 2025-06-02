@@ -10,7 +10,8 @@ from .serializers import AdminRegisterSerializer, AdminLoginSerializer, AdminUse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from collections import defaultdict
-
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
 
 # ✅ Import your AdminUser model
 from .models import AdminUser
@@ -68,6 +69,50 @@ class AdminDeactivateView(APIView):
             return Response({"message": "Admin deactivated"})
         except AdminUser.DoesNotExist:
             return Response({"error": "Admin not found"}, status=404)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def admin_update_view(request):
+    try:
+        data = json.loads(request.body)
+        admin_id = data.get('id')  # or 'admin_id' depending on your frontend
+
+        if not admin_id:
+            return JsonResponse({'error': 'Admin ID is required'}, status=400)
+
+        try:
+            admin = AdminUser.objects.get(id=admin_id)
+        except AdminUser.DoesNotExist:
+            return JsonResponse({'error': 'Admin not found'}, status=404)
+
+        # Update fields (customize to your model fields)
+        admin.name = data.get('name', admin.name)
+        admin.email = data.get('email', admin.email)
+        admin.role = data.get('role', admin.role)
+
+        admin.save()
+
+        return JsonResponse({'message': 'Admin updated successfully'})
+    
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+class AdminProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            user = request.user
+            admin = AdminUser.objects.get(id=user.id)
+
+            serializer = AdminUserSerializer(admin)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except AdminUser.DoesNotExist:
+            return Response({"error": "Admin not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
 
 class JobseekerCVView(APIView):
     permission_classes = [AllowAny]

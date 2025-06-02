@@ -8,7 +8,13 @@
       <form @submit.prevent="updateProfile">
         <div class="form-group">
           <label for="username">Username:</label>
-          <input id="username" v-model="profile.username" type="text" required />
+          <input
+            id="username"
+            v-model="profile.username"
+            type="text"
+            autocomplete="username"
+            required
+          />
         </div>
 
         <div class="form-group">
@@ -17,22 +23,29 @@
             id="password"
             v-model="profile.password"
             type="password"
+            autocomplete="new-password"
             placeholder="Leave blank to keep current"
           />
         </div>
 
         <div class="form-group">
           <label for="fullname">Full Name:</label>
-          <input id="fullname" v-model="profile.fullname" type="text" />
+          <input id="fullname" v-model="profile.fullname" type="text" autocomplete="name" />
         </div>
 
         <div class="form-group">
           <label for="email">Email:</label>
-          <input id="email" v-model="profile.email" type="email" required />
+          <input
+            id="email"
+            v-model="profile.email"
+            type="email"
+            autocomplete="email"
+            required
+          />
         </div>
 
         <button class="submit-btn" type="submit" :disabled="loading">
-          {{ loading ? 'Saving...' : 'Save Profile' }}
+          {{ loading ? "Saving..." : "Save Profile" }}
         </button>
       </form>
     </div>
@@ -40,7 +53,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import axios from "axios";
 
 export default {
   name: "AdminSettings",
@@ -50,24 +63,39 @@ export default {
         username: "",
         password: "",
         fullname: "",
-        email: ""
+        email: "",
       },
-      loading: false
+      loading: false,
     };
   },
   created() {
+    // Check token with correct key ('access_token' as per dashboard)
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      alert("You are not logged in. Please log in again.");
+      this.$router.push("/login");
+      return;
+    }
     this.loadProfile();
   },
   methods: {
     async loadProfile() {
       try {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          alert("You are not logged in. Please log in again.");
+          this.$router.push("/login");
+          return;
+        }
 
-        const response = await axios.get('http://localhost:8000/api/admin/profile/', {
-          headers: {
-            Authorization: `Bearer ${token}`
+        const response = await axios.get(
+          "http://localhost:8000/api/admin/profile/",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        });
+        );
 
         const data = response.data;
         this.profile.username = data.username;
@@ -75,45 +103,68 @@ export default {
         this.profile.email = data.email;
       } catch (error) {
         console.error("Failed to load profile:", error);
-        alert("Error loading profile.");
+        if (error.response && error.response.status === 401) {
+          alert("Session expired or unauthorized. Please log in again.");
+          localStorage.removeItem("access_token");
+          this.$router.push("/login");
+        } else {
+          alert("Error loading profile. Please try again later.");
+        }
       }
     },
 
     async updateProfile() {
       this.loading = true;
       try {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          alert("You are not logged in. Please log in again.");
+          this.$router.push("/login");
+          return;
+        }
 
         const updatePayload = {
           username: this.profile.username,
           fullname: this.profile.fullname,
-          email: this.profile.email
+          email: this.profile.email,
         };
 
         if (this.profile.password.trim()) {
           updatePayload.password = this.profile.password;
         }
 
-        await axios.put('http://localhost:8000/api/admin/update/', updatePayload, {
-          headers: {
-            Authorization: `Bearer ${token}`
+        await axios.put(
+          "http://localhost:8000/api/admin/update/",
+          updatePayload,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        });
+        );
 
         alert("Profile updated successfully!");
         this.profile.password = "";
       } catch (error) {
         console.error("Profile update failed:", error);
-        alert("Failed to update profile. Please check your input or try again later.");
+        if (error.response && error.response.status === 401) {
+          alert("Session expired or unauthorized. Please log in again.");
+          localStorage.removeItem("access_token");
+          this.$router.push("/login");
+        } else {
+          alert(
+            "Failed to update profile. Please check your input or try again later."
+          );
+        }
       } finally {
         this.loading = false;
       }
     },
 
     goBack() {
-      this.$router.push('/dashboard');
-    }
-  }
+      this.$router.push("/dashboard");
+    },
+  },
 };
 </script>
 
