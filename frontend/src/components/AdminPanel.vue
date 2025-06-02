@@ -17,6 +17,10 @@
           </button>
         </div>
       </div>
+      <br>
+      <div>
+        <button class="back-btn" @click="goBack">Back</button>
+      </div>
     </div>
   </div>
 </template>
@@ -33,6 +37,10 @@ export default {
     };
   },
   methods: {
+    goBack() {
+      this.$router.push('/dashboard');
+    },
+
     async fetchAdmins() {
       this.loading = true;
       try {
@@ -128,6 +136,16 @@ export default {
   text-align: center;
   width: 90%;
   max-width: 500px;
+}
+
+.back-btn {
+  margin-bottom: 15px;
+  background-color: #42a5f5;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 h1 {
