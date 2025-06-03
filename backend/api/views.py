@@ -27,7 +27,6 @@ class AdminRegisterView(APIView):
             return Response({"message": "Admin registered successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class AdminLoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -70,6 +69,18 @@ class AdminDeactivateView(APIView):
         except AdminUser.DoesNotExist:
             return Response({"error": "Admin not found"}, status=404)
 
+class AdminProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            admin = AdminUser.objects.get(id=request.user.id)
+        except AdminUser.DoesNotExist:
+            return Response({'error': 'Admin not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = AdminUserSerializer(admin)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def admin_update_view(request):
@@ -99,19 +110,19 @@ def admin_update_view(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-class AdminProfileView(APIView):
-    permission_classes = [IsAuthenticated]
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def admin_update_view(request):
+    try:
+        admin_user = AdminUser.objects.get(id=request.user.id)
+    except AdminUser.DoesNotExist:
+        return Response({'error': 'Admin not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-    def get(self, request):
-        try:
-            user = request.user
-            admin = AdminUser.objects.get(id=user.id)
-
-            serializer = AdminUserSerializer(admin)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except AdminUser.DoesNotExist:
-            return Response({"error": "Admin not found"}, status=status.HTTP_404_NOT_FOUND)
-
+    serializer = AdminUserSerializer(admin_user, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class JobseekerCVView(APIView):

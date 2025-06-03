@@ -10,7 +10,7 @@ urlpatterns = [
     path('admin/profile/', AdminProfileView.as_view(), name='admin-profile'),
     path('admin-users/', AdminListView.as_view()),  # ✅ must match Vue
     path('deactivate-admin/<int:pk>/', AdminDeactivateView.as_view()),
-    path('admin/update/', views.admin_update_view),
+    path('admin/update/', views.admin_update_view, name='admin-update'),
     path('submit-cv/', JobseekerCVView.as_view(), name='submit-cv'),
     path('submit-cv/<int:id>/', JobseekerCVDetailView.as_view(), name='submit-cv-detail'),
     path('jobseeker-login/', mobile_login, name='jobseeker-login'),
