@@ -21,7 +21,7 @@ export default {
     },
     goToJobseeker() {
       // Redirect to external jobseeker site
-      window.location.href = 'http://localhost:8081/';
+      window.location.href = 'http://192.168.8.197:8081/';
     },
   },
 }
